@@ -1,5 +1,13 @@
 # cfn-resource-provider
 
+This library is a relatively thin wrapper enabling the use of Rust in AWS Lambda to provide an
+AWS CloudFormation [custom resource]. It is intended to be used in conjunction with
+[`rust-aws-lambda`][rust-aws-lambda], a library that enables to run Rust applications serverless
+on AWS Lambda using the Go 1.x runtime.
+
+[custom resource]: https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/template-custom-resources.html
+[rust-aws-lambda]: https://github.com/srijs/rust-aws-lambda
+
 ## License
 
 This library is licensed under either of
