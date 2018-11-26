@@ -427,6 +427,19 @@ where
         }
     }
 
+    /// The resource properties field exists for all variants of the [`CfnRequest` enum]. This is a
+    /// helper method to access this field without requiring you to match for the variant yourself.
+    ///
+    /// [`CfnRequest` enum]: enum.CfnRequest.html
+    #[inline(always)]
+    pub fn resource_properties(&self) -> &P {
+        match self {
+            CfnRequest::Create { resource_properties, .. } => resource_properties,
+            CfnRequest::Delete { resource_properties, .. } => resource_properties,
+            CfnRequest::Update { resource_properties, .. } => resource_properties,
+        }
+    }
+
     /// This method turns a [`CfnRequest`] into a [`CfnResponse`], choosing one of the `Success` or
     /// `Failed` variants based on a `Result`. A [`CfnResponse`] should always be created through
     /// this method to ensure that all the relevant response-fields that AWS CloudFormation requires
