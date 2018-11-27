@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/pitkley/cfn-resource-provider.svg?branch=master)](https://travis-ci.org/pitkley/cfn-resource-provider)
+[![Build Status](https://api.travis-ci.com/pitkley/cfn-resource-provider.svg?branch=master)](https://travis-ci.com/pitkley/cfn-resource-provider)
 
 # cfn-resource-provider
 
