@@ -2,7 +2,7 @@
 name = "cfn-resource-provider"
 version = "0.1.0"
 authors = ["Pit Kleyersburg <pitkley@googlemail.com>"]
-license = "MIT/Apache-2.0"
+license = "MIT OR Apache-2.0"
 description = "AWS CloudFormation custom resource helper library"
 homepage = "https://github.com/pitkley/cfn-resource-provider"
 repository = "https://github.com/pitkley/cfn-resource-provider.git"
@@ -16,6 +16,10 @@ include = [
     "LICENSE-*",
     "README.md",
 ]
+
+[badges]
+travis-ci = { repository = "pitkley/cfn-resource-provider", branch = "master" }
+maintenance = { status = "actively-developed" }
 
 [dependencies]
 failure = "^0.1"

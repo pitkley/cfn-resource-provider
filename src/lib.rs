@@ -10,6 +10,25 @@
 //! [custom resource]: https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/template-custom-resources.html
 //! [rust-aws-lambda]: https://github.com/srijs/rust-aws-lambda
 //!
+//! ## Quick start example
+//!
+//! ```norun
+//! extern crate aws_lambda as lambda;
+//! extern crate cfn_resource_provider as cfn;
+//!
+//! use cfn::*;
+//!
+//! fn main() {
+//!     lambda::start(cfn::process(|event: CfnRequest<MyResourceProperties>| {
+//!         // Perform the necessary steps to create the custom resource. Afterwards you can return
+//!         // some data that should be serialized into the response. If you don't want to serialize
+//!         // any data, you can return `None` (were you unfortunately have to specify the unknown
+//!         // serializable type using the turbofish).
+//!         Ok(None::<()>)
+//!     }));
+//! }
+//! ```
+//!
 //! ## License
 //!
 //! This library is licensed under either of
@@ -22,9 +41,9 @@
 //!
 //! ### Contribution
 //!
-//! Unless you explicitly state otherwise, any contribution intentionally submitted
-//! for inclusion in DFW by you, as defined in the Apache-2.0 license, shall be
-//! dual licensed as above, without any additional terms or conditions.
+//! Unless you explicitly state otherwise, any contribution intentionally submitted for inclusion in
+//! cfn-resource-provider by you, as defined in the Apache-2.0 license, shall be dual licensed as
+//! above, without any additional terms or conditions.
 
 extern crate failure;
 extern crate futures;
@@ -49,7 +68,7 @@ use serde::ser::Serialize;
 /// provided by the implementor):
 ///
 /// ```norun
-/// arn:custom:cfn-resource-provider:::{suffix}
+/// arn:custom:cfn-resource-provider:::{stack_id}-{logical_resource_id}/{suffix}
 /// ```
 ///
 /// The fields of a property-type used for suffix creation should be chosen as such that it changes
@@ -82,7 +101,7 @@ use serde::ser::Serialize;
 /// following:
 ///
 /// ```norun
-/// arn:custom:cfn-resource-provider:::myresource@1.0.0/uniquereference
+/// arn:custom:cfn-resource-provider:::12345678-1234-1234-1234-1234567890ab-logical-id/myresource@1.0.0/uniquereference
 /// ```
 ///
 /// In this case `my_unique_parameter` is assumed to be the parameter that requires the custom
