@@ -9,6 +9,7 @@ extern crate tokio_core;
 use cfn_resource_provider::*;
 use failure::Error;
 use mockito::Matcher;
+#[cfg(feature = "go-runtime")]
 use tokio_core::reactor::Core;
 
 // TODO: identify the actual responses sent by AWS CloudFormation/S3
@@ -44,6 +45,7 @@ lazy_static! {
     };
 }
 
+#[cfg(feature = "go-runtime")]
 fn _simple_test<P>(status_code: usize, request: CfnRequest<P>) -> Result<Option<()>, Error>
 where
     P: PhysicalResourceIdSuffixProvider + Clone + Send + Sync + 'static,
@@ -53,13 +55,34 @@ where
         .match_header("Content-Length", Matcher::Any)
         .match_body(Matcher::Regex(
             r"arn:custom:cfn-resource-provider:::STACK-ID-LOGICAL-RESOURCE-ID".to_owned(),
-        )).with_status(status_code)
+        ))
+        .with_status(status_code)
         .create();
 
     let f = cfn_resource_provider::process(|_event: CfnRequest<P>| Ok(None))(request);
 
     let mut core = Core::new().unwrap();
     let result = core.run(f);
+
+    mock.assert();
+    result
+}
+
+#[cfg(feature = "native-runtime")]
+fn _simple_test<P>(status_code: usize, request: CfnRequest<P>) -> Result<CfnResponse, Error>
+where
+    P: PhysicalResourceIdSuffixProvider + Clone + Send + Sync + 'static,
+{
+    let mock = mockito::mock("PUT", "/presigned-url")
+        .match_header("Content-Type", "")
+        .match_header("Content-Length", Matcher::Any)
+        .match_body(Matcher::Regex(
+            r"arn:custom:cfn-resource-provider:::STACK-ID-LOGICAL-RESOURCE-ID".to_owned(),
+        ))
+        .with_status(status_code)
+        .create();
+
+    let result = cfn_resource_provider::process::<_, (), String>(request, &Ok(None));
 
     mock.assert();
     result

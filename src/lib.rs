@@ -2,15 +2,64 @@
 
 //! # cfn-resource-provider
 //!
-//! This library is a relatively thin wrapper enabling the use of Rust in AWS Lambda to provide an
-//! AWS CloudFormation [custom resource]. It is intended to be used in conjunction with
-//! [`rust-aws-lambda`][rust-aws-lambda], a library that enables to run Rust applications serverless
-//! on AWS Lambda using the Go 1.x runtime.
+//! This library provides the necessary structs and helper functions to enable the use of Rust in
+//! AWS Lambda to provide an AWS CloudFormation [custom resource]. It is intended to be used in
+//! conjunction with either:
+//!
+//! 1. [`aws-lambda-rust-runtime`][aws-lambda-rust-runtime], the official AWS Rust runtime for AWS
+//!    Lambda.
+//!
+//! 2. [`rust-aws-lambda`][rust-aws-lambda], a library that enables to run Rust applications
+//!    serverless on AWS Lambda using the Go 1.x runtime. *(Deprecated in favour of the official
+//!    runtime.)*
+//!
+//! The official AWS Lambda runtime is supported by default. If you want to use the Go 1.x based
+//! runtime instead, include `cfn-resource-provider` in your `Cargo.toml` as follows:
+//!
+//! ```toml
+//! [dependencies]
+//! cfn-resource-provider = { version = "*", default-features = false, features = ["go-runtime"] }
+//! ```
 //!
 //! [custom resource]: https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/template-custom-resources.html
+//! [aws-lambda-rust-runtime]: https://github.com/awslabs/aws-lambda-rust-runtime
 //! [rust-aws-lambda]: https://github.com/srijs/rust-aws-lambda
 //!
 //! ## Quick start example
+//!
+//! ### Official AWS Rust runtime for AWS Lambda
+//!
+//! ```norun
+//! extern crate lambda_runtime as lambda;
+//! extern crate cfn_resource_provider as cfn;
+//!
+//! use cfn::*;
+//! use lambda::{lambda, Context};
+//!
+//! fn my_handler(
+//!     request: CfnRequest<MyResourceProperties>,
+//!     context: Context
+//! ) -> Result<(), HandlerError> {
+//!     // Perform the required computation based on the request to create/update/delete your custom
+//!     // resource. Your final result should have `Option<S>` as its success type, where `S` is
+//!     // custom serializable data that will be added to the response sent to AWS CloudFormation.
+//!     // The error type can be chosen freely, although it has to implement `std::fmt::Display`, as
+//!     // it will be included as the failure-reason in the response sent to AWS CloudFormation.
+//!     let result: Result<Option<(), String> = /* your computation */;
+//!
+//!     // With the result ready, you can call `process` to create and send the `CfnResponse` type
+//!     // with all required fields prepopulated to AWS CloudFormation.
+//!     cfn::process(request, &result).map_err(|error| context.new_error(&format!("{}", error))?;
+//!
+//!     Ok(())
+//! }
+//!
+//! fn main() {
+//!     lambda!(my_handler);
+//! }
+//! ```
+//!
+//! ### Go 1.x based runtime
 //!
 //! ```norun
 //! extern crate aws_lambda as lambda;
@@ -46,6 +95,7 @@
 //! above, without any additional terms or conditions.
 
 extern crate failure;
+#[cfg(feature = "go-runtime")]
 extern crate futures;
 extern crate reqwest;
 extern crate serde;
@@ -55,6 +105,7 @@ extern crate serde_derive;
 extern crate serde_json;
 
 use failure::Error;
+#[cfg(feature = "go-runtime")]
 use futures::{Future, IntoFuture};
 use serde::de::{Deserialize, Deserializer};
 use serde::ser::Serialize;
@@ -453,9 +504,18 @@ where
     #[inline(always)]
     pub fn resource_properties(&self) -> &P {
         match self {
-            CfnRequest::Create { resource_properties, .. } => resource_properties,
-            CfnRequest::Delete { resource_properties, .. } => resource_properties,
-            CfnRequest::Update { resource_properties, .. } => resource_properties,
+            CfnRequest::Create {
+                resource_properties,
+                ..
+            } => resource_properties,
+            CfnRequest::Delete {
+                resource_properties,
+                ..
+            } => resource_properties,
+            CfnRequest::Update {
+                resource_properties,
+                ..
+            } => resource_properties,
         }
     }
 
@@ -466,9 +526,10 @@ where
     ///
     /// [`CfnRequest`]: enum.CfnRequest.html
     /// [`CfnResponse`]: enum.CfnResponse.html
-    pub fn into_response<S>(self, result: &Result<Option<S>, Error>) -> CfnResponse
+    pub fn into_response<S, E>(self, result: &Result<Option<S>, E>) -> CfnResponse
     where
         S: Serialize,
+        E: ::std::fmt::Display,
     {
         match result {
             Ok(data) => CfnResponse::Success {
@@ -619,7 +680,7 @@ pub enum CfnResponse {
 /// If your closure has errored, the failure reason will be extracted from the error you returned.
 /// If your closure succeeded, the positive return value will be serialized into the
 /// [`data` field][CfnResponse.Success.data] (unless the returned `Option` is `None`). (Specifying
-/// the [`no_echo` option] is currently not possible.)
+/// the [`no_echo` option][CfnResponse.Success.no_echo] is currently not possible.)
 ///
 /// ## Example
 ///
@@ -648,6 +709,7 @@ pub enum CfnResponse {
 /// [CfnResponse]: enum.CfnRequest.html
 /// [CfnResponse.Success.data]: enum.CfnResponse.html#variant.Success.field.data
 /// [CfnResponse.Success.no_echo]: enum.CfnResponse.html#variant.Success.field.no_echo
+#[cfg(feature = "go-runtime")]
 pub fn process<F, R, P, S>(
     f: F,
 ) -> impl Fn(CfnRequest<P>) -> Box<Future<Item = Option<S>, Error = Error> + Send>
@@ -687,11 +749,102 @@ where
                                 .header("Content-Type", "")
                                 .body(cfn_response)
                                 .send()
-                        }).and_then(reqwest::async::Response::error_for_status)
+                        })
+                        .and_then(reqwest::async::Response::error_for_status)
                         .map_err(Into::into)
-                }).and_then(move |_| request_result)
+                })
+                .and_then(move |_| request_result)
         }))
     }
+}
+
+/// Send an AWS CloudFormation custom resource response, based on a custom resource request and the
+/// result of a computation.
+///
+/// When creating a custom AWS CloudFormation resource, AWS CloudFormation will send a custom
+/// resource request (a JSON-object) to the AWS Lambda associated with the specific resource. It
+/// then expects this Lambda to perform the necessary computation to create, update, or delete the
+/// specific resource. AWS CloudFormation then needs to be informed about the result of this
+/// computation by performing a PUT request to a URL that was specified in the initial request,
+/// passing the result as a JSON-object in the request's body.
+///
+/// To aid in performing these steps, `process` takes two parameters: the statically typed request
+/// sent by AWS CloudFormation, [`CfnRequest<P>`][CfnRequest], and a [`Result`] that identifies if
+/// the computation performed for the requested resource was successful. It then transforms the
+/// request based on the result into a strongly typed response, [`CfnResponse`][CfnResponse], which
+/// is sent to AWS CloudFormation to indicate success or failure.
+///
+/// If the result you provided is [`Err`][Result.Err], the failure reason will be extracted from the
+/// error. If the result is [`Ok`][Result.Ok], it is expected to provide an `Option<S>`, where `S`
+/// will be serialized into the [`data` field][CfnResponse.Success.data] of the response, unless the
+/// returned `Option` is `None`. (Specifying the [`no_echo` option][CfnResponse.Success.no_echo] is
+/// currently not possible.)
+///
+/// `process` itself returns a result, with the success-value being the [`CfnResponse`][CfnResponse]
+/// that was sent to AWS CloudFormation, and the error being populated if creating or sending the
+/// response failed.
+///
+/// ## Example
+///
+/// ```norun
+/// extern crate lambda_runtime as lambda;
+/// extern crate cfn_resource_provider as cfn;
+///
+/// use cfn::*;
+/// use lambda::{lambda, Context};
+///
+/// fn my_handler(
+///     request: CfnRequest<MyResourceProperties>,
+///     context: Context
+/// ) -> Result<(), HandlerError> {
+///     // Perform the required computation based on the request to create/update/delete your custom
+///     // resource. Your final result should have `Option<S>` as its success type, where `S` is
+///     // custom serializable data that will be added to the response sent to AWS CloudFormation.
+///     // The error type can be chosen freely, although it has to implement `std::fmt::Display`, as
+///     // it will be included as the failure-reason in the response sent to AWS CloudFormation.
+///     let result: Result<Option<(), String> = /* your computation */;
+///
+///     // With the result ready, you can call `process` to create and send the `CfnResponse` type
+///     // with all required fields prepopulated to AWS CloudFormation.
+///     cfn::process(request, &result).map_err(|error| context.new_error(&format!("{}", error))?;
+///
+///     Ok(())
+/// }
+///
+/// fn main() {
+///     lambda!(my_handler);
+/// }
+/// ```
+///
+/// [aws-lambda-rust-runtime]: https://github.com/awslabs/aws-lambda-rust-runtime
+/// [CfnRequest]: enum.CfnRequest.html
+/// [`Result`]: https://doc.rust-lang.org/std/result/enum.Result.html
+/// [Result.Err]: https://doc.rust-lang.org/std/result/enum.Result.html#vartiant.Err
+/// [Result.Ok]: https://doc.rust-lang.org/std/result/enum.Result.html#vartiant.Ok
+/// [CfnResponse]: enum.CfnRequest.html
+/// [CfnResponse.Success.data]: enum.CfnResponse.html#variant.Success.field.data
+/// [CfnResponse.Success.no_echo]: enum.CfnResponse.html#variant.Success.field.no_echo
+#[cfg(feature = "native-runtime")]
+pub fn process<P, S, E>(
+    request: CfnRequest<P>,
+    result: &Result<Option<S>, E>,
+) -> Result<CfnResponse, Error>
+where
+    P: PhysicalResourceIdSuffixProvider + Clone,
+    S: Serialize,
+    E: ::std::fmt::Display,
+{
+    let response_url = request.response_url();
+    let cfn_response = request.into_response(result);
+    let cfn_response_string = serde_json::to_string(&cfn_response)?;
+    let client = reqwest::Client::builder().build()?;
+    client
+        .put(&response_url)
+        .header("Content-Type", "")
+        .body(cfn_response_string)
+        .send()?
+        .error_for_status()?;
+    Ok(cfn_response)
 }
 
 #[cfg(test)]
@@ -846,7 +999,8 @@ mod test {
             "ResourceProperties": {
                 "ExampleProperty1": "example property 1"
             }
-        })).unwrap();
+        }))
+        .unwrap();
         assert_eq!(expected_request, actual_request);
     }
 
@@ -860,7 +1014,8 @@ mod test {
             "ResourceType" : "Custom::MyCustomResourceType",
             "LogicalResourceId" : "name of resource in template",
             "StackId" : "arn:aws:cloudformation:us-east-2:namespace:stack/stack-name/guid"
-        })).unwrap();
+        }))
+        .unwrap();
     }
 
     #[test]
@@ -876,7 +1031,8 @@ mod test {
             "ResourceProperties": {
                 "UnknownProperty": null
             }
-        })).unwrap();
+        }))
+        .unwrap();
     }
 
     #[test]
@@ -902,7 +1058,8 @@ mod test {
             "ResourceProperties": {
                 "ExampleProperty1": "example property 1"
             }
-        })).unwrap();
+        }))
+        .unwrap();
         assert_eq!(expected_request, actual_request);
     }
 
@@ -923,7 +1080,8 @@ mod test {
             "ResourceType" : "Custom::MyCustomResourceType",
             "LogicalResourceId" : "name of resource in template",
             "StackId" : "arn:aws:cloudformation:us-east-2:namespace:stack/stack-name/guid"
-        })).unwrap();
+        }))
+        .unwrap();
         assert_eq!(expected_request, actual_request);
     }
 
@@ -940,7 +1098,8 @@ mod test {
             "ResourceProperties": {
                 "UnknownProperty": null
             }
-        })).unwrap();
+        }))
+        .unwrap();
     }
 
     #[test]
@@ -961,7 +1120,8 @@ mod test {
             "LogicalResourceId" : "name of resource in template",
             "StackId" : "arn:aws:cloudformation:us-east-2:namespace:stack/stack-name/guid",
             "ResourceProperties" : null
-        })).unwrap();
+        }))
+        .unwrap();
         assert_eq!(expected_request, actual_request);
         actual_request = serde_json::from_value(json!({
             "RequestType" : "Create",
@@ -970,7 +1130,8 @@ mod test {
             "ResourceType" : "Custom::MyCustomResourceType",
             "LogicalResourceId" : "name of resource in template",
             "StackId" : "arn:aws:cloudformation:us-east-2:namespace:stack/stack-name/guid"
-        })).unwrap();
+        }))
+        .unwrap();
         assert_eq!(expected_request, actual_request);
     }
 
@@ -989,7 +1150,8 @@ mod test {
                 "key2" : [ "list" ],
                 "key3" : { "key4" : "map" }
             }
-        })).unwrap();
+        }))
+        .unwrap();
     }
 
     #[test]
@@ -1014,7 +1176,8 @@ mod test {
                 "key2" : [ "list" ],
                 "key3" : { "key4" : "map" }
             }
-        })).unwrap();
+        }))
+        .unwrap();
         assert_eq!(expected_request, actual_request);
         actual_request = serde_json::from_value(json!({
             "RequestType" : "Create",
@@ -1023,7 +1186,8 @@ mod test {
             "ResourceType" : "Custom::MyCustomResourceType",
             "LogicalResourceId" : "name of resource in template",
             "StackId" : "arn:aws:cloudformation:us-east-2:namespace:stack/stack-name/guid"
-        })).unwrap();
+        }))
+        .unwrap();
         assert_eq!(expected_request, actual_request);
     }
 
@@ -1061,7 +1225,8 @@ mod test {
                 "key2" : [ "list" ],
                 "key3" : { "key4" : "map" }
             }
-        })).unwrap();
+        }))
+        .unwrap();
 
         assert_eq!(expected_request, actual_request);
     }
@@ -1153,7 +1318,8 @@ mod test {
                 "key2" : [ "list" ],
                 "key3" : { "key4" : "map" }
             }
-        })).unwrap();
+        }))
+        .unwrap();
 
         assert_eq!(expected_request, actual_request);
     }
@@ -1248,7 +1414,8 @@ mod test {
                 "key2" : [ "list" ],
                 "key3" : { "key4" : "map" }
             }
-        })).unwrap();
+        }))
+        .unwrap();
 
         assert_eq!(expected_request, actual_request);
     }
@@ -1315,7 +1482,8 @@ mod test {
             resource_properties: Ignored,
         };
         let actual_response =
-            serde_json::to_value(actual_request.into_response(&Ok(None::<()>))).unwrap();
+            serde_json::to_value(actual_request.into_response(&Ok::<_, Error>(None::<()>)))
+                .unwrap();
         let expected_response = json!({
             "Status": "SUCCESS",
             "RequestId": "unique id for this create request",
@@ -1337,11 +1505,13 @@ mod test {
             stack_id: "arn:aws:cloudformation:us-east-2:namespace:stack/stack-name/guid".to_owned(),
             resource_properties: Ignored,
         };
-        let actual_response =
-            serde_json::to_value(actual_request.into_response(&Ok(Some(ExampleProperties {
+        let actual_response = serde_json::to_value(actual_request.into_response(&Ok::<_, Error>(
+            Some(ExampleProperties {
                 example_property_1: "example return property 1".to_owned(),
                 example_property_2: None,
-            })))).unwrap();
+            }),
+        )))
+        .unwrap();
         let expected_response = json!({
             "Status": "SUCCESS",
             "RequestId": "unique id for this create request",
