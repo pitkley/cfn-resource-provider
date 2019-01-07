@@ -15,7 +15,7 @@ use tokio_core::reactor::Core;
 lazy_static! {
     static ref CFNREQUEST_CREATE_IGNORED: CfnRequest<Ignored> = CfnRequest::Create {
         request_id: "REQUEST-ID".to_owned(),
-        response_url: format!("{}{}", mockito::SERVER_URL, "/presigned-url"),
+        response_url: format!("{}{}", mockito::server_url(), "/presigned-url"),
         resource_type: "REQUEST-TYPE".to_owned(),
         logical_resource_id: "LOGICAL-RESOURCE-ID".to_owned(),
         stack_id: "STACK-ID".to_owned(),
@@ -23,7 +23,7 @@ lazy_static! {
     };
     static ref CFNREQUEST_DELETE_IGNORED: CfnRequest<Ignored> = CfnRequest::Delete {
         request_id: "REQUEST-ID".to_owned(),
-        response_url: format!("{}{}", mockito::SERVER_URL, "/presigned-url"),
+        response_url: format!("{}{}", mockito::server_url(), "/presigned-url"),
         resource_type: "REQUEST-TYPE".to_owned(),
         logical_resource_id: "LOGICAL-RESOURCE-ID".to_owned(),
         stack_id: "STACK-ID".to_owned(),
@@ -33,7 +33,7 @@ lazy_static! {
     };
     static ref CFNREQUEST_UPDATE_IGNORED: CfnRequest<Ignored> = CfnRequest::Update {
         request_id: "REQUEST-ID".to_owned(),
-        response_url: format!("{}{}", mockito::SERVER_URL, "/presigned-url"),
+        response_url: format!("{}{}", mockito::server_url(), "/presigned-url"),
         resource_type: "REQUEST-TYPE".to_owned(),
         logical_resource_id: "LOGICAL-RESOURCE-ID".to_owned(),
         stack_id: "STACK-ID".to_owned(),
