@@ -31,5 +31,5 @@ serde_json = "^1"
 
 [dev-dependencies]
 lazy_static = "^1"
-mockito = "^0.21"
+mockito = "^0.23"
 tokio-core = "^0.1"
