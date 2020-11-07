@@ -1,0 +1,52 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="API documentation for the Rust `cfn_resource_provider` crate."><meta name="keywords" content="rust, rustlang, rust-lang, cfn_resource_provider"><title>cfn_resource_provider - Rust</title><link rel="stylesheet" type="text/css" href="../normalize.css"><link rel="stylesheet" type="text/css" href="../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../ayu.css" disabled ><script src="../storage.js"></script><noscript><link rel="stylesheet" href="../noscript.css"></noscript><link rel="shortcut icon" href="../favicon.ico"><style type="text/css">#crate-search{background-image:url("../down-arrow.svg");}</style></head><body class="rustdoc mod"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../cfn_resource_provider/index.html'><div class='logo-container rust-logo'><img src='../rust-logo.png' alt='logo'></div></a><p class='location'>Crate cfn_resource_provider</p><div class='block version'><p>Version 0.1.2-alpha.0</p></div><div class="sidebar-elems"><a id='all-types' href='all.html'><p>See all cfn_resource_provider's items</p></a><div class="block items"><ul><li><a href="#structs">Structs</a></li><li><a href="#enums">Enums</a></li><li><a href="#traits">Traits</a></li><li><a href="#functions">Functions</a></li></ul></div><p class='location'></p><script>window.sidebarCurrent = {name: 'cfn_resource_provider', ty: 'mod', relpath: '../'};</script></div></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><span class="help-button">?</span>
+                <a id="settings-menu" href="../settings.html"><img src="../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><h1 class='fqn'><span class='out-of-band'><span id='render-detail'><a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">[<span class='inner'>&#x2212;</span>]</a></span><a class='srclink' href='../src/cfn_resource_provider/lib.rs.html#9-1394' title='goto source code'>[src]</a></span><span class='in-band'>Crate <a class="mod" href=''>cfn_resource_provider</a></span></h1><div class='docblock'><h1 id="cfn-resource-provider" class="section-header"><a href="#cfn-resource-provider">cfn-resource-provider</a></h1>
+<p>This library is a relatively thin wrapper enabling the use of Rust in AWS Lambda to provide an
+AWS CloudFormation <a href="https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/template-custom-resources.html">custom resource</a>. It is intended to be used in conjunction with
+<a href="https://github.com/srijs/rust-aws-lambda"><code>rust-aws-lambda</code></a>, a library that enables to run Rust applications serverless
+on AWS Lambda using the Go 1.x runtime.</p>
+<h2 id="quick-start-example" class="section-header"><a href="#quick-start-example">Quick start example</a></h2>
+<div class="example-wrap"><pre class="rust rust-example-rendered">
+<span class="kw">extern</span> <span class="kw">crate</span> <span class="ident">aws_lambda</span> <span class="kw">as</span> <span class="ident">lambda</span>;
+<span class="kw">extern</span> <span class="kw">crate</span> <span class="ident">cfn_resource_provider</span> <span class="kw">as</span> <span class="ident">cfn</span>;
+
+<span class="kw">use</span> <span class="ident">cfn</span>::<span class="kw-2">*</span>;
+
+<span class="kw">fn</span> <span class="ident">main</span>() {
+    <span class="ident">lambda</span>::<span class="ident">start</span>(<span class="ident">cfn</span>::<span class="ident">process</span>(<span class="op">|</span><span class="ident">event</span>: <span class="ident">CfnRequest</span><span class="op">&lt;</span><span class="ident">MyResourceProperties</span><span class="op">&gt;</span><span class="op">|</span> {
+        <span class="comment">// Perform the necessary steps to create the custom resource. Afterwards you can return</span>
+        <span class="comment">// some data that should be serialized into the response. If you don&#39;t want to serialize</span>
+        <span class="comment">// any data, you can return `None` (where you unfortunately have to specify the unknown</span>
+        <span class="comment">// serializable type using the turbofish).</span>
+        <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>::<span class="op">&lt;</span>()<span class="op">&gt;</span>)
+    }));
+}</pre></div>
+<h2 id="license" class="section-header"><a href="#license">License</a></h2>
+<p>This library is licensed under either of</p>
+<ul>
+<li>Apache License, Version 2.0, (<a href="LICENSE-APACHE">LICENSE-APACHE</a> or
+http://www.apache.org/licenses/LICENSE-2.0)</li>
+<li>MIT license (<a href="LICENSE-MIT">LICENSE-MIT</a> or http://opensource.org/licenses/MIT)</li>
+</ul>
+<p>at your option.</p>
+<h3 id="contribution" class="section-header"><a href="#contribution">Contribution</a></h3>
+<p>Unless you explicitly state otherwise, any contribution intentionally submitted for inclusion in
+cfn-resource-provider by you, as defined in the Apache-2.0 license, shall be dual licensed as
+above, without any additional terms or conditions.</p>
+</div><h2 id='structs' class='section-header'><a href="#structs">Structs</a></h2>
+<table><tr class='module-item'><td><a class="struct" href="struct.Ignored.html" title='cfn_resource_provider::Ignored struct'>Ignored</a></td><td class='docblock-short'><p>This is a special struct that can be used in conjunction with <a href="https://serde.rs/">Serde</a> to represent a field whose
+contents should be discarded during deserialization if it is present, and doesn't fail if the
+field doesn't exist.</p>
+</td></tr></table><h2 id='enums' class='section-header'><a href="#enums">Enums</a></h2>
+<table><tr class='module-item'><td><a class="enum" href="enum.CfnRequest.html" title='cfn_resource_provider::CfnRequest enum'>CfnRequest</a></td><td class='docblock-short'><p>On stack modification, AWS CloudFormation sends out a request for custom resources. This enum
+can represent such a request, encapsulating the three request variants:</p>
+</td></tr><tr class='module-item'><td><a class="enum" href="enum.CfnResponse.html" title='cfn_resource_provider::CfnResponse enum'>CfnResponse</a></td><td class='docblock-short'><p>This enum represents the response expected by AWS CloudFormation to a custom resource
+modification request (see <a href="enum.CfnRequest.html"><code>CfnRequest</code></a>). It is serializable into the
+required JSON form, such that it can be sent to the pre-signed S3 response-URL provided by AWS
+CloudFormation without further modification.</p>
+</td></tr></table><h2 id='traits' class='section-header'><a href="#traits">Traits</a></h2>
+<table><tr class='module-item'><td><a class="trait" href="trait.PhysicalResourceIdSuffixProvider.html" title='cfn_resource_provider::PhysicalResourceIdSuffixProvider trait'>PhysicalResourceIdSuffixProvider</a></td><td class='docblock-short'><p>Every AWS CloudFormation resource, including custom resources, needs a unique physical resource
+ID. To aid in supplying this resource ID, your resource property type has to implement this
+trait with its single member, <code>physical_resource_id_suffix</code>.</p>
+</td></tr></table><h2 id='functions' class='section-header'><a href="#functions">Functions</a></h2>
+<table><tr class='module-item'><td><a class="fn" href="fn.process.html" title='cfn_resource_provider::process fn'>process</a></td><td class='docblock-short'><p>Process an AWS CloudFormation custom resource request.</p>
+</td></tr></table></section><section id="search" class="content hidden"></section><section class="footer"></section><script>window.rootPath = "../";window.currentCrate = "cfn_resource_provider";</script><script src="../main.js"></script><script defer src="../search-index.js"></script></body></html>

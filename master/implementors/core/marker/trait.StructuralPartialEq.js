@@ -1,0 +1,3 @@
+(function() {var implementors = {};
+implementors["cfn_resource_provider"] = [{"text":"impl&lt;P&gt; StructuralPartialEq for CfnRequest&lt;P&gt; <span class=\"where fmt-newline\">where<br>&nbsp;&nbsp;&nbsp;&nbsp;P: Clone,&nbsp;</span>","synthetic":false,"types":[]},{"text":"impl StructuralPartialEq for Ignored","synthetic":false,"types":[]},{"text":"impl StructuralPartialEq for CfnResponse","synthetic":false,"types":[]}];
+if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

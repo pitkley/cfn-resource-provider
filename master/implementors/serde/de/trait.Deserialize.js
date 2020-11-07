@@ -1,0 +1,3 @@
+(function() {var implementors = {};
+implementors["cfn_resource_provider"] = [{"text":"impl&lt;'de, P&gt; Deserialize&lt;'de&gt; for CfnRequest&lt;P&gt; <span class=\"where fmt-newline\">where<br>&nbsp;&nbsp;&nbsp;&nbsp;P: Clone,<br>&nbsp;&nbsp;&nbsp;&nbsp;P: Deserialize&lt;'de&gt;,&nbsp;</span>","synthetic":false,"types":[]},{"text":"impl&lt;'de&gt; Deserialize&lt;'de&gt; for Ignored","synthetic":false,"types":[]}];
+if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()
