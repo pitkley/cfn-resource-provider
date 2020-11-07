@@ -11,13 +11,10 @@ on AWS Lambda using the Go 1.x runtime.
 ## Quick start example
 
 ```rust
-extern crate aws_lambda as lambda;
-extern crate cfn_resource_provider as cfn;
-
-use cfn::*;
+use cfn_resource_provider::*;
 
 fn main() {
-    lambda::start(cfn::process(|event: CfnRequest<MyResourceProperties>| {
+    aws_lambda::start(cfn_resource_provider::process(|event: CfnRequest<MyResourceProperties>| {
         // Perform the necessary steps to create the custom resource. Afterwards you can return
         // some data that should be serialized into the response. If you don't want to serialize
         // any data, you can return `None` (where you unfortunately have to specify the unknown

@@ -21,14 +21,11 @@
 //! ## Quick start example
 //!
 //! ```no_run
-//! extern crate aws_lambda as lambda;
-//! extern crate cfn_resource_provider as cfn;
 //! # type MyResourceProperties = ();
-//!
-//! use cfn::*;
+//! use cfn_resource_provider::CfnRequest;
 //!
 //! fn main() {
-//!     lambda::start(cfn::process(|event: CfnRequest<MyResourceProperties>| {
+//!     aws_lambda::start(cfn_resource_provider::process(|event: CfnRequest<MyResourceProperties>| {
 //!         // Perform the necessary steps to create the custom resource. Afterwards you can return
 //!         // some data that should be serialized into the response. If you don't want to serialize
 //!         // any data, you can return `None` (where you unfortunately have to specify the unknown
@@ -54,18 +51,9 @@
 //! cfn-resource-provider by you, as defined in the Apache-2.0 license, shall be dual licensed as
 //! above, without any additional terms or conditions.
 
-extern crate failure;
-extern crate futures;
-extern crate reqwest;
-#[macro_use]
-extern crate serde;
-#[cfg_attr(test, macro_use)]
-extern crate serde_json;
-
 use failure::Error;
 use futures::{Future, IntoFuture};
-use serde::de::{Deserialize, Deserializer};
-use serde::ser::Serialize;
+use serde::{de, Deserialize, Serialize};
 
 /// Every AWS CloudFormation resource, including custom resources, needs a unique physical resource
 /// ID. To aid in supplying this resource ID, your resource property type has to implement this
@@ -165,12 +153,8 @@ impl PhysicalResourceIdSuffixProvider for () {
 /// modification of the custom resource fails.)
 ///
 /// ```
-/// # extern crate cfn_resource_provider;
-/// # #[macro_use]
-/// # extern crate serde;
-/// # #[macro_use]
-/// # extern crate serde_json;
-/// # use cfn_resource_provider::*;
+/// # use serde::Deserialize;
+/// # use serde_json::json;
 /// #[derive(Debug, PartialEq, Clone, Deserialize)]
 /// struct MyResourceProperties {
 ///     parameter1: String,
@@ -525,7 +509,7 @@ pub struct Ignored;
 impl<'de> Deserialize<'de> for Ignored {
     fn deserialize<D>(_deserializer: D) -> Result<Ignored, D::Error>
     where
-        D: Deserializer<'de>,
+        D: de::Deserializer<'de>,
     {
         Ok(Ignored)
     }
@@ -641,14 +625,11 @@ pub enum CfnResponse {
 /// ## Example
 ///
 /// ```no_run
-/// extern crate aws_lambda as lambda;
-/// extern crate cfn_resource_provider as cfn;
 /// # type MyResourceProperties = ();
-///
-/// use cfn::*;
+/// use cfn_resource_provider::*;
 ///
 /// fn main() {
-///     lambda::start(cfn::process(|event: CfnRequest<MyResourceProperties>| {
+///     aws_lambda::start(cfn_resource_provider::process(|event: CfnRequest<MyResourceProperties>| {
 ///         // Perform the necessary steps to create the custom resource. Afterwards you can return
 ///         // some data that should be serialized into the response. If you don't want to serialize
 ///         // any data, you can return `None` (where you unfortunately have to specify the unknown
@@ -696,7 +677,7 @@ where
                 .map_err(Into::into)
                 .into_future()
                 .and_then(|cfn_response| {
-                    reqwest::async::Client::builder()
+                    reqwest::r#async::Client::builder()
                         .build()
                         .into_future()
                         .and_then(move |client| {
@@ -706,7 +687,7 @@ where
                                 .body(cfn_response)
                                 .send()
                         })
-                        .and_then(reqwest::async::Response::error_for_status)
+                        .and_then(reqwest::r#async::Response::error_for_status)
                         .map_err(Into::into)
                 })
                 .and_then(move |_| request_result)
@@ -717,6 +698,7 @@ where
 #[cfg(test)]
 mod test {
     use super::*;
+    use serde_json::json;
 
     #[derive(Debug, Clone)]
     struct Empty;

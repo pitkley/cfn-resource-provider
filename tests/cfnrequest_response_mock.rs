@@ -6,16 +6,9 @@
 // option. This file may not be copied, modified or distributed
 // except according to those terms.
 
-extern crate cfn_resource_provider;
-
-extern crate failure;
-#[macro_use]
-extern crate lazy_static;
-extern crate mockito;
-extern crate tokio_core;
-
 use cfn_resource_provider::*;
 use failure::Error;
+use lazy_static::lazy_static;
 use mockito::Matcher;
 use tokio_core::reactor::Core;
 

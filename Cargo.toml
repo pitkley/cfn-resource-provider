@@ -6,6 +6,7 @@ license = "MIT OR Apache-2.0"
 description = "AWS CloudFormation custom resource helper library"
 homepage = "https://github.com/pitkley/cfn-resource-provider"
 repository = "https://github.com/pitkley/cfn-resource-provider.git"
+edition = "2018"
 
 categories = ["api-bindings"]
 keywords = ["amazon", "aws", "cloudformation", "cfn"]
