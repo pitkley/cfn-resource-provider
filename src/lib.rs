@@ -453,9 +453,18 @@ where
     #[inline(always)]
     pub fn resource_properties(&self) -> &P {
         match self {
-            CfnRequest::Create { resource_properties, .. } => resource_properties,
-            CfnRequest::Delete { resource_properties, .. } => resource_properties,
-            CfnRequest::Update { resource_properties, .. } => resource_properties,
+            CfnRequest::Create {
+                resource_properties,
+                ..
+            } => resource_properties,
+            CfnRequest::Delete {
+                resource_properties,
+                ..
+            } => resource_properties,
+            CfnRequest::Update {
+                resource_properties,
+                ..
+            } => resource_properties,
         }
     }
 
@@ -687,9 +696,11 @@ where
                                 .header("Content-Type", "")
                                 .body(cfn_response)
                                 .send()
-                        }).and_then(reqwest::async::Response::error_for_status)
+                        })
+                        .and_then(reqwest::async::Response::error_for_status)
                         .map_err(Into::into)
-                }).and_then(move |_| request_result)
+                })
+                .and_then(move |_| request_result)
         }))
     }
 }
@@ -846,7 +857,8 @@ mod test {
             "ResourceProperties": {
                 "ExampleProperty1": "example property 1"
             }
-        })).unwrap();
+        }))
+        .unwrap();
         assert_eq!(expected_request, actual_request);
     }
 
@@ -860,7 +872,8 @@ mod test {
             "ResourceType" : "Custom::MyCustomResourceType",
             "LogicalResourceId" : "name of resource in template",
             "StackId" : "arn:aws:cloudformation:us-east-2:namespace:stack/stack-name/guid"
-        })).unwrap();
+        }))
+        .unwrap();
     }
 
     #[test]
@@ -876,7 +889,8 @@ mod test {
             "ResourceProperties": {
                 "UnknownProperty": null
             }
-        })).unwrap();
+        }))
+        .unwrap();
     }
 
     #[test]
@@ -902,7 +916,8 @@ mod test {
             "ResourceProperties": {
                 "ExampleProperty1": "example property 1"
             }
-        })).unwrap();
+        }))
+        .unwrap();
         assert_eq!(expected_request, actual_request);
     }
 
@@ -923,7 +938,8 @@ mod test {
             "ResourceType" : "Custom::MyCustomResourceType",
             "LogicalResourceId" : "name of resource in template",
             "StackId" : "arn:aws:cloudformation:us-east-2:namespace:stack/stack-name/guid"
-        })).unwrap();
+        }))
+        .unwrap();
         assert_eq!(expected_request, actual_request);
     }
 
@@ -940,7 +956,8 @@ mod test {
             "ResourceProperties": {
                 "UnknownProperty": null
             }
-        })).unwrap();
+        }))
+        .unwrap();
     }
 
     #[test]
@@ -961,7 +978,8 @@ mod test {
             "LogicalResourceId" : "name of resource in template",
             "StackId" : "arn:aws:cloudformation:us-east-2:namespace:stack/stack-name/guid",
             "ResourceProperties" : null
-        })).unwrap();
+        }))
+        .unwrap();
         assert_eq!(expected_request, actual_request);
         actual_request = serde_json::from_value(json!({
             "RequestType" : "Create",
@@ -970,7 +988,8 @@ mod test {
             "ResourceType" : "Custom::MyCustomResourceType",
             "LogicalResourceId" : "name of resource in template",
             "StackId" : "arn:aws:cloudformation:us-east-2:namespace:stack/stack-name/guid"
-        })).unwrap();
+        }))
+        .unwrap();
         assert_eq!(expected_request, actual_request);
     }
 
@@ -989,7 +1008,8 @@ mod test {
                 "key2" : [ "list" ],
                 "key3" : { "key4" : "map" }
             }
-        })).unwrap();
+        }))
+        .unwrap();
     }
 
     #[test]
@@ -1014,7 +1034,8 @@ mod test {
                 "key2" : [ "list" ],
                 "key3" : { "key4" : "map" }
             }
-        })).unwrap();
+        }))
+        .unwrap();
         assert_eq!(expected_request, actual_request);
         actual_request = serde_json::from_value(json!({
             "RequestType" : "Create",
@@ -1023,7 +1044,8 @@ mod test {
             "ResourceType" : "Custom::MyCustomResourceType",
             "LogicalResourceId" : "name of resource in template",
             "StackId" : "arn:aws:cloudformation:us-east-2:namespace:stack/stack-name/guid"
-        })).unwrap();
+        }))
+        .unwrap();
         assert_eq!(expected_request, actual_request);
     }
 
@@ -1061,7 +1083,8 @@ mod test {
                 "key2" : [ "list" ],
                 "key3" : { "key4" : "map" }
             }
-        })).unwrap();
+        }))
+        .unwrap();
 
         assert_eq!(expected_request, actual_request);
     }
@@ -1153,7 +1176,8 @@ mod test {
                 "key2" : [ "list" ],
                 "key3" : { "key4" : "map" }
             }
-        })).unwrap();
+        }))
+        .unwrap();
 
         assert_eq!(expected_request, actual_request);
     }
@@ -1248,7 +1272,8 @@ mod test {
                 "key2" : [ "list" ],
                 "key3" : { "key4" : "map" }
             }
-        })).unwrap();
+        }))
+        .unwrap();
 
         assert_eq!(expected_request, actual_request);
     }
@@ -1341,7 +1366,8 @@ mod test {
             serde_json::to_value(actual_request.into_response(&Ok(Some(ExampleProperties {
                 example_property_1: "example return property 1".to_owned(),
                 example_property_2: None,
-            })))).unwrap();
+            }))))
+            .unwrap();
         let expected_response = json!({
             "Status": "SUCCESS",
             "RequestId": "unique id for this create request",

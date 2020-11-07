@@ -53,7 +53,8 @@ where
         .match_header("Content-Length", Matcher::Any)
         .match_body(Matcher::Regex(
             r"arn:custom:cfn-resource-provider:::STACK-ID-LOGICAL-RESOURCE-ID".to_owned(),
-        )).with_status(status_code)
+        ))
+        .with_status(status_code)
         .create();
 
     let f = cfn_resource_provider::process(|_event: CfnRequest<P>| Ok(None))(request);
