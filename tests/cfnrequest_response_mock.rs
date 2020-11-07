@@ -1,3 +1,11 @@
+// Copyright Pit Kleyersburg <pitkley@googlemail.com>
+//
+// Licensed under the Apache License, Version 2.0 <LICENSE-APACHE or
+// http://www.apache.org/licenses/LICENSE-2.0> or the MIT license
+// <LICENSE-MIT or http://opensource.org/licenses/MIT>, at your
+// option. This file may not be copied, modified or distributed
+// except according to those terms.
+
 extern crate cfn_resource_provider;
 
 extern crate failure;
@@ -53,7 +61,8 @@ where
         .match_header("Content-Length", Matcher::Any)
         .match_body(Matcher::Regex(
             r"arn:custom:cfn-resource-provider:::STACK-ID-LOGICAL-RESOURCE-ID".to_owned(),
-        )).with_status(status_code)
+        ))
+        .with_status(status_code)
         .create();
 
     let f = cfn_resource_provider::process(|_event: CfnRequest<P>| Ok(None))(request);

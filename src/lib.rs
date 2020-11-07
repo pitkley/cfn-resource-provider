@@ -1,3 +1,11 @@
+// Copyright Pit Kleyersburg <pitkley@googlemail.com>
+//
+// Licensed under the Apache License, Version 2.0 <LICENSE-APACHE or
+// http://www.apache.org/licenses/LICENSE-2.0> or the MIT license
+// <LICENSE-MIT or http://opensource.org/licenses/MIT>, at your
+// option. This file may not be copied, modified or distributed
+// except according to those terms.
+
 #![deny(missing_docs)]
 
 //! # cfn-resource-provider
@@ -12,9 +20,10 @@
 //!
 //! ## Quick start example
 //!
-//! ```norun
+//! ```no_run
 //! extern crate aws_lambda as lambda;
 //! extern crate cfn_resource_provider as cfn;
+//! # type MyResourceProperties = ();
 //!
 //! use cfn::*;
 //!
@@ -22,7 +31,7 @@
 //!     lambda::start(cfn::process(|event: CfnRequest<MyResourceProperties>| {
 //!         // Perform the necessary steps to create the custom resource. Afterwards you can return
 //!         // some data that should be serialized into the response. If you don't want to serialize
-//!         // any data, you can return `None` (were you unfortunately have to specify the unknown
+//!         // any data, you can return `None` (where you unfortunately have to specify the unknown
 //!         // serializable type using the turbofish).
 //!         Ok(None::<()>)
 //!     }));
@@ -48,9 +57,8 @@
 extern crate failure;
 extern crate futures;
 extern crate reqwest;
-extern crate serde;
 #[macro_use]
-extern crate serde_derive;
+extern crate serde;
 #[cfg_attr(test, macro_use)]
 extern crate serde_json;
 
@@ -67,7 +75,7 @@ use serde::ser::Serialize;
 /// resource ID will be created according to the following format (where `suffix` will be the suffix
 /// provided by the implementor):
 ///
-/// ```norun
+/// ```text
 /// arn:custom:cfn-resource-provider:::{stack_id}-{logical_resource_id}/{suffix}
 /// ```
 ///
@@ -100,7 +108,7 @@ use serde::ser::Serialize;
 /// When [`CfnResponse`] creates or updates the physical ID for the resource, it might look like the
 /// following:
 ///
-/// ```norun
+/// ```text
 /// arn:custom:cfn-resource-provider:::12345678-1234-1234-1234-1234567890ab-logical-id/myresource@1.0.0/uniquereference
 /// ```
 ///
@@ -159,7 +167,7 @@ impl PhysicalResourceIdSuffixProvider for () {
 /// ```
 /// # extern crate cfn_resource_provider;
 /// # #[macro_use]
-/// # extern crate serde_derive;
+/// # extern crate serde;
 /// # #[macro_use]
 /// # extern crate serde_json;
 /// # use cfn_resource_provider::*;
@@ -453,9 +461,18 @@ where
     #[inline(always)]
     pub fn resource_properties(&self) -> &P {
         match self {
-            CfnRequest::Create { resource_properties, .. } => resource_properties,
-            CfnRequest::Delete { resource_properties, .. } => resource_properties,
-            CfnRequest::Update { resource_properties, .. } => resource_properties,
+            CfnRequest::Create {
+                resource_properties,
+                ..
+            } => resource_properties,
+            CfnRequest::Delete {
+                resource_properties,
+                ..
+            } => resource_properties,
+            CfnRequest::Update {
+                resource_properties,
+                ..
+            } => resource_properties,
         }
     }
 
@@ -623,9 +640,10 @@ pub enum CfnResponse {
 ///
 /// ## Example
 ///
-/// ```norun
+/// ```no_run
 /// extern crate aws_lambda as lambda;
 /// extern crate cfn_resource_provider as cfn;
+/// # type MyResourceProperties = ();
 ///
 /// use cfn::*;
 ///
@@ -633,10 +651,10 @@ pub enum CfnResponse {
 ///     lambda::start(cfn::process(|event: CfnRequest<MyResourceProperties>| {
 ///         // Perform the necessary steps to create the custom resource. Afterwards you can return
 ///         // some data that should be serialized into the response. If you don't want to serialize
-///         // any data, you can return `None` (were you unfortunately have to specify the unknown
+///         // any data, you can return `None` (where you unfortunately have to specify the unknown
 ///         // serializable type using the turbofish).
 ///         Ok(None::<()>)
-///     });
+///     }));
 /// }
 /// ```
 ///
@@ -650,7 +668,7 @@ pub enum CfnResponse {
 /// [CfnResponse.Success.no_echo]: enum.CfnResponse.html#variant.Success.field.no_echo
 pub fn process<F, R, P, S>(
     f: F,
-) -> impl Fn(CfnRequest<P>) -> Box<Future<Item = Option<S>, Error = Error> + Send>
+) -> impl Fn(CfnRequest<P>) -> Box<dyn Future<Item = Option<S>, Error = Error> + Send>
 where
     F: Fn(CfnRequest<P>) -> R + Send + Sync + 'static,
     R: IntoFuture<Item = Option<S>, Error = Error> + Send + 'static,
@@ -687,9 +705,11 @@ where
                                 .header("Content-Type", "")
                                 .body(cfn_response)
                                 .send()
-                        }).and_then(reqwest::async::Response::error_for_status)
+                        })
+                        .and_then(reqwest::async::Response::error_for_status)
                         .map_err(Into::into)
-                }).and_then(move |_| request_result)
+                })
+                .and_then(move |_| request_result)
         }))
     }
 }
@@ -738,7 +758,7 @@ mod test {
             stack_id: String::new(),
             resource_properties: Empty,
         };
-        assert!(!request.physical_resource_id().ends_with("/"));
+        assert!(!request.physical_resource_id().ends_with('/'));
     }
 
     /// This test verifies that the suffix provided by the generic type given to `CfnRequest` is
@@ -784,7 +804,7 @@ mod test {
             resource_properties: None,
         };
         assert!(!request.physical_resource_id().is_empty());
-        assert!(!request.physical_resource_id().ends_with("/"));
+        assert!(!request.physical_resource_id().ends_with('/'));
         request = CfnRequest::Create {
             request_id: String::new(),
             response_url: String::new(),
@@ -794,7 +814,7 @@ mod test {
             resource_properties: Some(Empty),
         };
         assert!(!request.physical_resource_id().is_empty());
-        assert!(!request.physical_resource_id().ends_with("/"));
+        assert!(!request.physical_resource_id().ends_with('/'));
     }
 
     /// This is meant as a type-checking test: we want to ensure that we can provide the optional
@@ -810,7 +830,7 @@ mod test {
             resource_properties: None,
         };
         assert!(!request.physical_resource_id().is_empty());
-        assert!(!request.physical_resource_id().ends_with("/"));
+        assert!(!request.physical_resource_id().ends_with('/'));
         request = CfnRequest::Create {
             request_id: String::new(),
             response_url: String::new(),
@@ -820,7 +840,7 @@ mod test {
             resource_properties: Some(()),
         };
         assert!(!request.physical_resource_id().is_empty());
-        assert!(!request.physical_resource_id().ends_with("/"));
+        assert!(!request.physical_resource_id().ends_with('/'));
     }
 
     #[test]
@@ -846,7 +866,8 @@ mod test {
             "ResourceProperties": {
                 "ExampleProperty1": "example property 1"
             }
-        })).unwrap();
+        }))
+        .unwrap();
         assert_eq!(expected_request, actual_request);
     }
 
@@ -860,7 +881,8 @@ mod test {
             "ResourceType" : "Custom::MyCustomResourceType",
             "LogicalResourceId" : "name of resource in template",
             "StackId" : "arn:aws:cloudformation:us-east-2:namespace:stack/stack-name/guid"
-        })).unwrap();
+        }))
+        .unwrap();
     }
 
     #[test]
@@ -876,7 +898,8 @@ mod test {
             "ResourceProperties": {
                 "UnknownProperty": null
             }
-        })).unwrap();
+        }))
+        .unwrap();
     }
 
     #[test]
@@ -902,7 +925,8 @@ mod test {
             "ResourceProperties": {
                 "ExampleProperty1": "example property 1"
             }
-        })).unwrap();
+        }))
+        .unwrap();
         assert_eq!(expected_request, actual_request);
     }
 
@@ -923,7 +947,8 @@ mod test {
             "ResourceType" : "Custom::MyCustomResourceType",
             "LogicalResourceId" : "name of resource in template",
             "StackId" : "arn:aws:cloudformation:us-east-2:namespace:stack/stack-name/guid"
-        })).unwrap();
+        }))
+        .unwrap();
         assert_eq!(expected_request, actual_request);
     }
 
@@ -940,7 +965,8 @@ mod test {
             "ResourceProperties": {
                 "UnknownProperty": null
             }
-        })).unwrap();
+        }))
+        .unwrap();
     }
 
     #[test]
@@ -961,7 +987,8 @@ mod test {
             "LogicalResourceId" : "name of resource in template",
             "StackId" : "arn:aws:cloudformation:us-east-2:namespace:stack/stack-name/guid",
             "ResourceProperties" : null
-        })).unwrap();
+        }))
+        .unwrap();
         assert_eq!(expected_request, actual_request);
         actual_request = serde_json::from_value(json!({
             "RequestType" : "Create",
@@ -970,7 +997,8 @@ mod test {
             "ResourceType" : "Custom::MyCustomResourceType",
             "LogicalResourceId" : "name of resource in template",
             "StackId" : "arn:aws:cloudformation:us-east-2:namespace:stack/stack-name/guid"
-        })).unwrap();
+        }))
+        .unwrap();
         assert_eq!(expected_request, actual_request);
     }
 
@@ -989,7 +1017,8 @@ mod test {
                 "key2" : [ "list" ],
                 "key3" : { "key4" : "map" }
             }
-        })).unwrap();
+        }))
+        .unwrap();
     }
 
     #[test]
@@ -1014,7 +1043,8 @@ mod test {
                 "key2" : [ "list" ],
                 "key3" : { "key4" : "map" }
             }
-        })).unwrap();
+        }))
+        .unwrap();
         assert_eq!(expected_request, actual_request);
         actual_request = serde_json::from_value(json!({
             "RequestType" : "Create",
@@ -1023,7 +1053,8 @@ mod test {
             "ResourceType" : "Custom::MyCustomResourceType",
             "LogicalResourceId" : "name of resource in template",
             "StackId" : "arn:aws:cloudformation:us-east-2:namespace:stack/stack-name/guid"
-        })).unwrap();
+        }))
+        .unwrap();
         assert_eq!(expected_request, actual_request);
     }
 
@@ -1061,7 +1092,8 @@ mod test {
                 "key2" : [ "list" ],
                 "key3" : { "key4" : "map" }
             }
-        })).unwrap();
+        }))
+        .unwrap();
 
         assert_eq!(expected_request, actual_request);
     }
@@ -1153,7 +1185,8 @@ mod test {
                 "key2" : [ "list" ],
                 "key3" : { "key4" : "map" }
             }
-        })).unwrap();
+        }))
+        .unwrap();
 
         assert_eq!(expected_request, actual_request);
     }
@@ -1248,7 +1281,8 @@ mod test {
                 "key2" : [ "list" ],
                 "key3" : { "key4" : "map" }
             }
-        })).unwrap();
+        }))
+        .unwrap();
 
         assert_eq!(expected_request, actual_request);
     }
@@ -1341,7 +1375,8 @@ mod test {
             serde_json::to_value(actual_request.into_response(&Ok(Some(ExampleProperties {
                 example_property_1: "example return property 1".to_owned(),
                 example_property_2: None,
-            })))).unwrap();
+            }))))
+            .unwrap();
         let expected_response = json!({
             "Status": "SUCCESS",
             "RequestId": "unique id for this create request",

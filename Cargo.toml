@@ -25,11 +25,11 @@ maintenance = { status = "actively-developed" }
 failure = "^0.1"
 futures = "^0.1"
 reqwest = "^0.9"
-serde = "^1"
-serde_derive = "^1"
+serde = { version = "^1", features = ["derive"] }
 serde_json = "^1"
 
 [dev-dependencies]
+aws_lambda = { git = "https://github.com/srijs/rust-aws-lambda", rev = "d49082420eb12cbb3eac1e85cca874bd1038dc0b" }
 lazy_static = "^1"
 mockito = "^0.25"
 tokio-core = "^0.1"

@@ -1,5 +1,3 @@
-[![Build Status](https://api.travis-ci.com/pitkley/cfn-resource-provider.svg?branch=master)](https://travis-ci.com/pitkley/cfn-resource-provider)
-
 # cfn-resource-provider
 
 This library is a relatively thin wrapper enabling the use of Rust in AWS Lambda to provide an
@@ -22,7 +20,7 @@ fn main() {
     lambda::start(cfn::process(|event: CfnRequest<MyResourceProperties>| {
         // Perform the necessary steps to create the custom resource. Afterwards you can return
         // some data that should be serialized into the response. If you don't want to serialize
-        // any data, you can return `None` (were you unfortunately have to specify the unknown
+        // any data, you can return `None` (where you unfortunately have to specify the unknown
         // serializable type using the turbofish).
         Ok(None::<()>)
     }));
