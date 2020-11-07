@@ -20,9 +20,10 @@
 //!
 //! ## Quick start example
 //!
-//! ```norun
+//! ```no_run
 //! extern crate aws_lambda as lambda;
 //! extern crate cfn_resource_provider as cfn;
+//! # type MyResourceProperties = ();
 //!
 //! use cfn::*;
 //!
@@ -30,7 +31,7 @@
 //!     lambda::start(cfn::process(|event: CfnRequest<MyResourceProperties>| {
 //!         // Perform the necessary steps to create the custom resource. Afterwards you can return
 //!         // some data that should be serialized into the response. If you don't want to serialize
-//!         // any data, you can return `None` (were you unfortunately have to specify the unknown
+//!         // any data, you can return `None` (where you unfortunately have to specify the unknown
 //!         // serializable type using the turbofish).
 //!         Ok(None::<()>)
 //!     }));
@@ -75,7 +76,7 @@ use serde::ser::Serialize;
 /// resource ID will be created according to the following format (where `suffix` will be the suffix
 /// provided by the implementor):
 ///
-/// ```norun
+/// ```text
 /// arn:custom:cfn-resource-provider:::{stack_id}-{logical_resource_id}/{suffix}
 /// ```
 ///
@@ -108,7 +109,7 @@ use serde::ser::Serialize;
 /// When [`CfnResponse`] creates or updates the physical ID for the resource, it might look like the
 /// following:
 ///
-/// ```norun
+/// ```text
 /// arn:custom:cfn-resource-provider:::12345678-1234-1234-1234-1234567890ab-logical-id/myresource@1.0.0/uniquereference
 /// ```
 ///
@@ -640,9 +641,10 @@ pub enum CfnResponse {
 ///
 /// ## Example
 ///
-/// ```norun
+/// ```no_run
 /// extern crate aws_lambda as lambda;
 /// extern crate cfn_resource_provider as cfn;
+/// # type MyResourceProperties = ();
 ///
 /// use cfn::*;
 ///
@@ -650,10 +652,10 @@ pub enum CfnResponse {
 ///     lambda::start(cfn::process(|event: CfnRequest<MyResourceProperties>| {
 ///         // Perform the necessary steps to create the custom resource. Afterwards you can return
 ///         // some data that should be serialized into the response. If you don't want to serialize
-///         // any data, you can return `None` (were you unfortunately have to specify the unknown
+///         // any data, you can return `None` (where you unfortunately have to specify the unknown
 ///         // serializable type using the turbofish).
 ///         Ok(None::<()>)
-///     });
+///     }));
 /// }
 /// ```
 ///

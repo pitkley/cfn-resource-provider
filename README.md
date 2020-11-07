@@ -20,7 +20,7 @@ fn main() {
     lambda::start(cfn::process(|event: CfnRequest<MyResourceProperties>| {
         // Perform the necessary steps to create the custom resource. Afterwards you can return
         // some data that should be serialized into the response. If you don't want to serialize
-        // any data, you can return `None` (were you unfortunately have to specify the unknown
+        // any data, you can return `None` (where you unfortunately have to specify the unknown
         // serializable type using the turbofish).
         Ok(None::<()>)
     }));
