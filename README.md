@@ -1,5 +1,3 @@
-[![Build Status](https://api.travis-ci.com/pitkley/cfn-resource-provider.svg?branch=master)](https://travis-ci.com/pitkley/cfn-resource-provider)
-
 # cfn-resource-provider
 
 This library is a relatively thin wrapper enabling the use of Rust in AWS Lambda to provide an
