@@ -57,9 +57,8 @@
 extern crate failure;
 extern crate futures;
 extern crate reqwest;
-extern crate serde;
 #[macro_use]
-extern crate serde_derive;
+extern crate serde;
 #[cfg_attr(test, macro_use)]
 extern crate serde_json;
 
@@ -168,7 +167,7 @@ impl PhysicalResourceIdSuffixProvider for () {
 /// ```
 /// # extern crate cfn_resource_provider;
 /// # #[macro_use]
-/// # extern crate serde_derive;
+/// # extern crate serde;
 /// # #[macro_use]
 /// # extern crate serde_json;
 /// # use cfn_resource_provider::*;
