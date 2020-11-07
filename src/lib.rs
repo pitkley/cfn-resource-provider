@@ -667,7 +667,7 @@ pub enum CfnResponse {
 /// [CfnResponse.Success.no_echo]: enum.CfnResponse.html#variant.Success.field.no_echo
 pub fn process<F, R, P, S>(
     f: F,
-) -> impl Fn(CfnRequest<P>) -> Box<Future<Item = Option<S>, Error = Error> + Send>
+) -> impl Fn(CfnRequest<P>) -> Box<dyn Future<Item = Option<S>, Error = Error> + Send>
 where
     F: Fn(CfnRequest<P>) -> R + Send + Sync + 'static,
     R: IntoFuture<Item = Option<S>, Error = Error> + Send + 'static,
@@ -757,7 +757,7 @@ mod test {
             stack_id: String::new(),
             resource_properties: Empty,
         };
-        assert!(!request.physical_resource_id().ends_with("/"));
+        assert!(!request.physical_resource_id().ends_with('/'));
     }
 
     /// This test verifies that the suffix provided by the generic type given to `CfnRequest` is
@@ -803,7 +803,7 @@ mod test {
             resource_properties: None,
         };
         assert!(!request.physical_resource_id().is_empty());
-        assert!(!request.physical_resource_id().ends_with("/"));
+        assert!(!request.physical_resource_id().ends_with('/'));
         request = CfnRequest::Create {
             request_id: String::new(),
             response_url: String::new(),
@@ -813,7 +813,7 @@ mod test {
             resource_properties: Some(Empty),
         };
         assert!(!request.physical_resource_id().is_empty());
-        assert!(!request.physical_resource_id().ends_with("/"));
+        assert!(!request.physical_resource_id().ends_with('/'));
     }
 
     /// This is meant as a type-checking test: we want to ensure that we can provide the optional
@@ -829,7 +829,7 @@ mod test {
             resource_properties: None,
         };
         assert!(!request.physical_resource_id().is_empty());
-        assert!(!request.physical_resource_id().ends_with("/"));
+        assert!(!request.physical_resource_id().ends_with('/'));
         request = CfnRequest::Create {
             request_id: String::new(),
             response_url: String::new(),
@@ -839,7 +839,7 @@ mod test {
             resource_properties: Some(()),
         };
         assert!(!request.physical_resource_id().is_empty());
-        assert!(!request.physical_resource_id().ends_with("/"));
+        assert!(!request.physical_resource_id().ends_with('/'));
     }
 
     #[test]
