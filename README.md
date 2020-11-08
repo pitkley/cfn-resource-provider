@@ -1,26 +1,30 @@
 # cfn-resource-provider
 
 This library is a relatively thin wrapper enabling the use of Rust in AWS Lambda to provide an
-AWS CloudFormation [custom resource]. It is intended to be used in conjunction with
-[`rust-aws-lambda`][rust-aws-lambda], a library that enables to run Rust applications serverless
-on AWS Lambda using the Go 1.x runtime.
+AWS CloudFormation [custom resource]. It has to be used in conjunction with the official
+[Rust AWS Lambda runtime].
 
 [custom resource]: https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/template-custom-resources.html
-[rust-aws-lambda]: https://github.com/srijs/rust-aws-lambda
+[Rust AWS Lambda runtime]: https://github.com/awslabs/aws-lambda-rust-runtime
 
 ## Quick start example
 
 ```rust
-use cfn_resource_provider::*;
+use cfn_resource_provider::CfnRequest;
 
-fn main() {
-    aws_lambda::start(cfn_resource_provider::process(|event: CfnRequest<MyResourceProperties>| {
-        // Perform the necessary steps to create the custom resource. Afterwards you can return
-        // some data that should be serialized into the response. If you don't want to serialize
-        // any data, you can return `None` (where you unfortunately have to specify the unknown
-        // serializable type using the turbofish).
-        Ok(None::<()>)
-    }));
+type Error = Box<dyn std::error::Error + Send + Sync + 'static>;
+
+#[tokio::main]
+async fn main() -> Result<(), Error> {
+    lambda::run(cfn_resource_provider::process(resource)).await;
+    Ok(())
+}
+
+async fn resource(request: CfnRequest<MyResourceProperties>) -> Result<Option<()>, Error> {
+    // Perform the necessary steps to create the custom resource. Afterwards you can return some
+    // data that should be serialized into the response. If you don't want to serialize any
+    // data, you can return `None`. (Please note that you _have to_ return an `Option`!)
+    Ok(None)
 }
 ```
 

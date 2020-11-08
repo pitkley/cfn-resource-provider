@@ -7,12 +7,12 @@
 // except according to those terms.
 
 use cfn_resource_provider::*;
-use failure::Error;
+use lambda::Handler;
 use lazy_static::lazy_static;
 use mockito::Matcher;
-use tokio_core::reactor::Core;
 
-// TODO: identify the actual responses sent by AWS CloudFormation/S3
+type Error = Box<dyn std::error::Error + Send + Sync>;
+
 lazy_static! {
     static ref CFNREQUEST_CREATE_IGNORED: CfnRequest<Ignored> = CfnRequest::Create {
         request_id: "REQUEST-ID".to_owned(),
@@ -45,9 +45,10 @@ lazy_static! {
     };
 }
 
-fn _simple_test<P>(status_code: usize, request: CfnRequest<P>) -> Result<Option<()>, Error>
+async fn _simple_test<P>(status_code: usize, request: CfnRequest<P>) -> Result<Option<()>, Error>
 where
-    P: PhysicalResourceIdSuffixProvider + Clone + Send + Sync + 'static,
+    P: PhysicalResourceIdProvider + Clone + Send + Sync + 'static,
+    P: for<'de> serde::de::Deserialize<'de>,
 {
     let mock = mockito::mock("PUT", "/presigned-url")
         .match_header("Content-Type", "")
@@ -58,57 +59,58 @@ where
         .with_status(status_code)
         .create();
 
-    let f = cfn_resource_provider::process(|_event: CfnRequest<P>| Ok(None))(request);
-
-    let mut core = Core::new().unwrap();
-    let result = core.run(f);
-
+    let mut handler = cfn_resource_provider::process(|_event: CfnRequest<P>| {
+        futures::future::ok::<Option<()>, String>(None)
+    });
+    let result = handler.call(request, Default::default()).await;
     mock.assert();
     result
 }
 
-fn _simple_test_200<P>(request: CfnRequest<P>)
+async fn _simple_test_200<P>(request: CfnRequest<P>)
 where
-    P: PhysicalResourceIdSuffixProvider + Clone + Send + Sync + 'static,
+    P: PhysicalResourceIdProvider + Clone + Send + Sync + 'static,
+    P: for<'de> serde::de::Deserialize<'de>,
 {
-    let result = _simple_test(200, request);
+    let result = _simple_test(200, request).await;
     assert!(result.is_ok());
 }
 
-fn _simple_test_403<P>(request: CfnRequest<P>)
+async fn _simple_test_403<P>(request: CfnRequest<P>)
 where
-    P: PhysicalResourceIdSuffixProvider + Clone + Send + Sync + 'static,
+    P: PhysicalResourceIdProvider + Clone + Send + Sync + 'static,
+    P: for<'de> serde::de::Deserialize<'de>,
 {
-    let result = _simple_test(403, request);
+    let result = _simple_test(403, request).await;
     assert!(result.is_err());
 }
 
-#[test]
-fn cfnrequest_create_ignored_200() {
-    _simple_test_200(CFNREQUEST_CREATE_IGNORED.clone());
+#[tokio::test]
+async fn cfnrequest_create_ignored_200() {
+    _simple_test_200(CFNREQUEST_CREATE_IGNORED.clone()).await;
 }
 
-#[test]
-fn cfnrequest_create_ignored_403() {
-    _simple_test_403(CFNREQUEST_CREATE_IGNORED.clone());
+#[tokio::test]
+async fn cfnrequest_create_ignored_403() {
+    _simple_test_403(CFNREQUEST_CREATE_IGNORED.clone()).await;
 }
 
-#[test]
-fn cfnrequest_delete_ignored_200() {
-    _simple_test_200(CFNREQUEST_DELETE_IGNORED.clone());
+#[tokio::test]
+async fn cfnrequest_delete_ignored_200() {
+    _simple_test_200(CFNREQUEST_DELETE_IGNORED.clone()).await;
 }
 
-#[test]
-fn cfnrequest_delete_ignored_403() {
-    _simple_test_403(CFNREQUEST_DELETE_IGNORED.clone());
+#[tokio::test]
+async fn cfnrequest_delete_ignored_403() {
+    _simple_test_403(CFNREQUEST_DELETE_IGNORED.clone()).await;
 }
 
-#[test]
-fn cfnrequest_update_ignored_200() {
-    _simple_test_200(CFNREQUEST_UPDATE_IGNORED.clone());
+#[tokio::test]
+async fn cfnrequest_update_ignored_200() {
+    _simple_test_200(CFNREQUEST_UPDATE_IGNORED.clone()).await;
 }
 
-#[test]
-fn cfnrequest_update_ignored_403() {
-    _simple_test_403(CFNREQUEST_UPDATE_IGNORED.clone());
+#[tokio::test]
+async fn cfnrequest_update_ignored_403() {
+    _simple_test_403(CFNREQUEST_UPDATE_IGNORED.clone()).await;
 }
